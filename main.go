@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -27,23 +28,31 @@ func main() {
 
 	ticker := time.Tick(*interval)
 	for range ticker {
-		cpuPercent, err := cpu.Percent(time.Second, false)
-		if err != nil {
-			logger.Println("Error getting CPU usage:", err)
+		if err := monitorAndLog(logger); err != nil {
+			logger.Println("Error:", err)
 		}
-
-		memInfo, err := mem.VirtualMemory()
-		if err != nil {
-			logger.Println("Error getting memory info:", err)
-		}
-
-		diskInfo, err := disk.Usage("/")
-		if err != nil {
-			logger.Println("Error getting disk usage info:", err)
-		}
-
-		logger.Printf("CPU Usage: %.2f%%\n", cpuPercent[0])
-		logger.Printf("Memory Info: %+v\n", memInfo)
-		logger.Printf("Disk Usage: %+v\n", diskInfo)
 	}
+}
+
+func monitorAndLog(logger *log.Logger) error {
+	cpuPercent, err := cpu.Percent(time.Second, false)
+	if err != nil {
+		return fmt.Errorf("error getting CPU usage: %w", err)
+	}
+
+	memInfo, err := mem.VirtualMemory()
+	if err != nil {
+		return fmt.Errorf("error getting memory info: %w", err)
+	}
+
+	diskInfo, err := disk.Usage("/")
+	if err != nil {
+		return fmt.Errorf("error getting disk usage info: %w", err)
+	}
+
+	logger.Printf("CPU Usage: %.2f%%\n", cpuPercent[0])
+	logger.Printf("Memory Info: %+v\n", memInfo)
+	logger.Printf("Disk Usage: %+v\n", diskInfo)
+
+	return nil
 }
